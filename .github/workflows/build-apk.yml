@@ -13,87 +13,170 @@ jobs:
       - name: Setup JDK
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
-          java-version: '17'
+          distribution: temurin
+          java-version: 17
 
-      - name: Install Android SDK
+      - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Create project
+      - name: Create Android project
         run: |
-          mkdir -p app/src/main/java/com/example/app
+          mkdir -p app/src/main/java/com/example/samaratasks
 
-          echo "rootProject.name='SamaraTasks'" > settings.gradle
-          echo "include ':app'" >> settings.gradle
-
-          cat <<EOF > build.gradle
-          buildscript {
-              repositories { google(); mavenCentral() }
-              dependencies { classpath 'com.android.tools.build:gradle:8.2.2' }
+          cat > settings.gradle <<'EOF'
+          pluginManagement {
+              repositories {
+                  google()
+                  mavenCentral()
+                  gradlePluginPortal()
+              }
           }
-          allprojects {
-              repositories { google(); mavenCentral() }
+          dependencyResolutionManagement {
+              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+          }
+          rootProject.name = 'SamaraTasks'
+          include ':app'
+          EOF
+
+          cat > build.gradle <<'EOF'
+          plugins {
+              id 'com.android.application' version '8.2.2' apply false
           }
           EOF
 
-          cat <<EOF > app/build.gradle
-          apply plugin: 'com.android.application'
+          cat > app/build.gradle <<'EOF'
+          plugins {
+              id 'com.android.application'
+          }
 
           android {
-              namespace "com.example.app"
+              namespace 'com.example.samaratasks'
               compileSdk 34
 
               defaultConfig {
-                  applicationId "com.example.app"
-                  minSdk 21
+                  applicationId 'com.example.samaratasks'
+                  minSdk 23
                   targetSdk 34
                   versionCode 1
-                  versionName "1.0"
+                  versionName '1.0'
               }
           }
           EOF
 
-          mkdir -p app/src/main
-          cat <<EOF > app/src/main/AndroidManifest.xml
-          <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-              package="com.example.app">
-              <application android:label="SamaraTasks">
-                  <activity android:name=".MainActivity">
+          cat > app/src/main/AndroidManifest.xml <<'EOF'
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+              <application
+                  android:theme="@style/AppTheme"
+                  android:label="SamaraTasks"
+                  android:allowBackup="true"
+                  android:supportsRtl="true">
+
+                  <activity
+                      android:name=".MainActivity"
+                      android:exported="true">
+
                       <intent-filter>
-                          <action android:name="android.intent.action.MAIN"/>
-                          <category android:name="android.intent.category.LAUNCHER"/>
+                          <action android:name="android.intent.action.MAIN" />
+                          <category android:name="android.intent.category.LAUNCHER" />
                       </intent-filter>
+
                   </activity>
               </application>
           </manifest>
           EOF
 
-          cat <<EOF > app/src/main/java/com/example/app/MainActivity.kt
-          package com.example.app
+          mkdir -p app/src/main/res/values
 
-          import android.os.Bundle
-          import androidx.activity.ComponentActivity
-          import androidx.activity.compose.setContent
-          import androidx.compose.material3.Text
+          cat > app/src/main/res/values/styles.xml <<'EOF'
+          <resources>
+              <style name="AppTheme" parent="android:style/Theme.Material.Light.NoActionBar">
+                  <item name="android:windowLightStatusBar">true</item>
+                  <item name="android:fontFamily">sans</item>
+              </style>
+          </resources>
+          EOF
 
-          class MainActivity : ComponentActivity() {
-              override fun onCreate(savedInstanceState: Bundle?) {
-                  super.onCreate(savedInstanceState)
-                  setContent {
-                      Text("Samara Tasks 🚀")
+          cat > app/src/main/java/com/example/samaratasks/MainActivity.java <<'EOF'
+          package com.example.samaratasks;
+
+          import android.app.Activity;
+          import android.os.Bundle;
+          import android.widget.LinearLayout;
+          import android.widget.TextView;
+          import android.widget.ScrollView;
+          import android.graphics.Typeface;
+          import android.view.Gravity;
+          import android.graphics.Color;
+
+          public class MainActivity extends Activity {
+              @Override
+              protected void onCreate(Bundle savedInstanceState) {
+                  super.onCreate(savedInstanceState);
+
+                  ScrollView scroll = new ScrollView(this);
+                  LinearLayout layout = new LinearLayout(this);
+                  layout.setOrientation(LinearLayout.VERTICAL);
+                  layout.setPadding(40, 60, 40, 40);
+
+                  TextView title = new TextView(this);
+                  title.setText("Мелкие задания Самара");
+                  title.setTextSize(26);
+                  title.setTypeface(null, Typeface.BOLD);
+                  title.setTextColor(Color.BLACK);
+                  layout.addView(title);
+
+                  TextView subtitle = new TextView(this);
+                  subtitle.setText("MVP-приложение работает. Здесь будут задания, отклики и связь с исполнителями.");
+                  subtitle.setTextSize(16);
+                  subtitle.setPadding(0, 20, 0, 30);
+                  layout.addView(subtitle);
+
+                  String[] tasks = {
+                      "Вынести мусор — 200₽ · Промышленный район",
+                      "Собрать стол — 700₽ · Октябрьский район",
+                      "Настроить Wi-Fi — 500₽ · Советский район",
+                      "Помочь донести вещи — 400₽ · Ленинский район"
+                  };
+
+                  for (String task : tasks) {
+                      TextView card = new TextView(this);
+                      card.setText(task);
+                      card.setTextSize(18);
+                      card.setTextColor(Color.BLACK);
+                      card.setPadding(30, 30, 30, 30);
+                      card.setBackgroundColor(Color.rgb(235, 235, 235));
+
+                      LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                          LinearLayout.LayoutParams.MATCH_PARENT,
+                          LinearLayout.LayoutParams.WRAP_CONTENT
+                      );
+                      params.setMargins(0, 0, 0, 20);
+                      layout.addView(card, params);
                   }
+
+                  TextView footer = new TextView(this);
+                  footer.setText("Версия 0.1");
+                  footer.setTextSize(14);
+                  footer.setGravity(Gravity.CENTER);
+                  footer.setPadding(0, 30, 0, 0);
+                  layout.addView(footer);
+
+                  scroll.addView(layout);
+                  setContentView(scroll);
               }
           }
           EOF
 
-      - name: Generate wrapper
-        run: gradle wrapper
-
       - name: Build APK
-        run: ./gradlew assembleDebug --stacktrace
+        run: |
+          gradle assembleDebug --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: apk
+          name: SamaraTasks-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
