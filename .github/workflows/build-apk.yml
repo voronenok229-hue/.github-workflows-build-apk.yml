@@ -8,8 +8,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Setup JDK
         uses: actions/setup-java@v4
@@ -17,43 +16,31 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Install Gradle
-        uses: gradle/gradle-build-action@v3
+      - name: Install Android SDK
+        uses: android-actions/setup-android@v3
 
-      - name: Create Android project
+      - name: Create project
         run: |
           mkdir -p app/src/main/java/com/example/app
 
-          cat <<EOF > settings.gradle
-          rootProject.name = "SamaraTasks"
-          include ':app'
-          EOF
+          echo "rootProject.name='SamaraTasks'" > settings.gradle
+          echo "include ':app'" >> settings.gradle
 
           cat <<EOF > build.gradle
           buildscript {
-              repositories {
-                  google()
-                  mavenCentral()
-              }
-              dependencies {
-                  classpath 'com.android.tools.build:gradle:8.2.0'
-              }
+              repositories { google(); mavenCentral() }
+              dependencies { classpath 'com.android.tools.build:gradle:8.2.2' }
           }
           allprojects {
-              repositories {
-                  google()
-                  mavenCentral()
-              }
+              repositories { google(); mavenCentral() }
           }
           EOF
 
           cat <<EOF > app/build.gradle
-          plugins {
-              id 'com.android.application'
-          }
+          apply plugin: 'com.android.application'
 
           android {
-              namespace 'com.example.app'
+              namespace "com.example.app"
               compileSdk 34
 
               defaultConfig {
@@ -63,25 +50,14 @@ jobs:
                   versionCode 1
                   versionName "1.0"
               }
-
-              buildTypes {
-                  release {
-                      minifyEnabled false
-                  }
-              }
-          }
-
-          dependencies {
           }
           EOF
 
+          mkdir -p app/src/main
           cat <<EOF > app/src/main/AndroidManifest.xml
           <manifest xmlns:android="http://schemas.android.com/apk/res/android"
               package="com.example.app">
-
-              <application
-                  android:label="SamaraTasks"
-                  android:theme="@android:style/Theme.Material.Light.NoActionBar">
+              <application android:label="SamaraTasks">
                   <activity android:name=".MainActivity">
                       <intent-filter>
                           <action android:name="android.intent.action.MAIN"/>
@@ -104,21 +80,20 @@ jobs:
               override fun onCreate(savedInstanceState: Bundle?) {
                   super.onCreate(savedInstanceState)
                   setContent {
-                      Text("Samara Tasks работает 🚀")
+                      Text("Samara Tasks 🚀")
                   }
               }
           }
           EOF
 
-      - name: Generate Gradle Wrapper
-        run: |
-          gradle wrapper
+      - name: Generate wrapper
+        run: gradle wrapper
 
       - name: Build APK
-        run: ./gradlew assembleDebug
+        run: ./gradlew assembleDebug --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug
+          name: apk
           path: app/build/outputs/apk/debug/app-debug.apk
