@@ -9,18 +9,20 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup JDK
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
+      - name: Install Gradle
+        uses: gradle/gradle-build-action@v3
+
       - name: Create Android project
         run: |
           mkdir -p app/src/main/java/com/example/app
-          mkdir -p app/src/main/res/layout
 
           cat <<EOF > settings.gradle
           rootProject.name = "SamaraTasks"
@@ -34,7 +36,7 @@ jobs:
                   mavenCentral()
               }
               dependencies {
-                  classpath 'com.android.tools.build:gradle:8.0.0'
+                  classpath 'com.android.tools.build:gradle:8.2.0'
               }
           }
           allprojects {
@@ -52,12 +54,12 @@ jobs:
 
           android {
               namespace 'com.example.app'
-              compileSdk 33
+              compileSdk 34
 
               defaultConfig {
                   applicationId "com.example.app"
                   minSdk 21
-                  targetSdk 33
+                  targetSdk 34
                   versionCode 1
                   versionName "1.0"
               }
@@ -96,7 +98,7 @@ jobs:
           import android.os.Bundle
           import androidx.activity.ComponentActivity
           import androidx.activity.compose.setContent
-          import androidx.compose.material.Text
+          import androidx.compose.material3.Text
 
           class MainActivity : ComponentActivity() {
               override fun onCreate(savedInstanceState: Bundle?) {
@@ -108,7 +110,7 @@ jobs:
           }
           EOF
 
-      - name: Add gradle wrapper
+      - name: Generate Gradle Wrapper
         run: |
           gradle wrapper
 
@@ -116,7 +118,7 @@ jobs:
         run: ./gradlew assembleDebug
 
       - name: Upload APK
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: app-debug
           path: app/build/outputs/apk/debug/app-debug.apk
