@@ -22,21 +22,15 @@ jobs:
       - name: Create Android project
         run: |
           mkdir -p app/src/main/java/com/example/samaratasks
+          mkdir -p app/src/main/res/values
 
           cat > settings.gradle <<'EOF'
           pluginManagement {
-              repositories {
-                  google()
-                  mavenCentral()
-                  gradlePluginPortal()
-              }
+              repositories { google(); mavenCentral(); gradlePluginPortal() }
           }
           dependencyResolutionManagement {
               repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-              repositories {
-                  google()
-                  mavenCentral()
-              }
+              repositories { google(); mavenCentral() }
           }
           rootProject.name = 'SamaraTasks'
           include ':app'
@@ -61,14 +55,24 @@ jobs:
                   applicationId 'com.example.samaratasks'
                   minSdk 23
                   targetSdk 34
-                  versionCode 1
-                  versionName '1.0'
+                  versionCode 2
+                  versionName '0.2'
               }
           }
           EOF
 
+          cat > app/src/main/res/values/styles.xml <<'EOF'
+          <resources>
+              <style name="AppTheme" parent="android:style/Theme.Material.Light.NoActionBar">
+                  <item name="android:fontFamily">sans</item>
+              </style>
+          </resources>
+          EOF
+
           cat > app/src/main/AndroidManifest.xml <<'EOF'
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+              <uses-permission android:name="android.permission.INTERNET" />
+
               <application
                   android:theme="@style/AppTheme"
                   android:label="SamaraTasks"
@@ -89,94 +93,216 @@ jobs:
           </manifest>
           EOF
 
-          mkdir -p app/src/main/res/values
-
-          cat > app/src/main/res/values/styles.xml <<'EOF'
-          <resources>
-              <style name="AppTheme" parent="android:style/Theme.Material.Light.NoActionBar">
-                  <item name="android:windowLightStatusBar">true</item>
-                  <item name="android:fontFamily">sans</item>
-              </style>
-          </resources>
-          EOF
-
           cat > app/src/main/java/com/example/samaratasks/MainActivity.java <<'EOF'
           package com.example.samaratasks;
 
           import android.app.Activity;
           import android.os.Bundle;
-          import android.widget.LinearLayout;
-          import android.widget.TextView;
-          import android.widget.ScrollView;
-          import android.graphics.Typeface;
-          import android.view.Gravity;
+          import android.content.Intent;
+          import android.net.Uri;
           import android.graphics.Color;
+          import android.graphics.Typeface;
+          import android.view.View;
+          import android.widget.*;
+
+          import java.util.ArrayList;
 
           public class MainActivity extends Activity {
+              LinearLayout listLayout;
+              ArrayList<String> tasks = new ArrayList<>();
+
               @Override
               protected void onCreate(Bundle savedInstanceState) {
                   super.onCreate(savedInstanceState);
 
+                  tasks.add("Вынести мусор — 200₽ · Промышленный район");
+                  tasks.add("Собрать стол — 700₽ · Октябрьский район");
+                  tasks.add("Настроить Wi-Fi — 500₽ · Советский район");
+                  tasks.add("Помочь донести вещи — 400₽ · Ленинский район");
+
+                  showMainScreen();
+              }
+
+              void showMainScreen() {
                   ScrollView scroll = new ScrollView(this);
-                  LinearLayout layout = new LinearLayout(this);
-                  layout.setOrientation(LinearLayout.VERTICAL);
-                  layout.setPadding(40, 60, 40, 40);
+                  LinearLayout root = new LinearLayout(this);
+                  root.setOrientation(LinearLayout.VERTICAL);
+                  root.setPadding(35, 55, 35, 35);
 
                   TextView title = new TextView(this);
                   title.setText("Мелкие задания Самара");
                   title.setTextSize(26);
                   title.setTypeface(null, Typeface.BOLD);
                   title.setTextColor(Color.BLACK);
-                  layout.addView(title);
+                  root.addView(title);
 
                   TextView subtitle = new TextView(this);
-                  subtitle.setText("MVP-приложение работает. Здесь будут задания, отклики и связь с исполнителями.");
+                  subtitle.setText("Найди подработку или создай мелкое задание рядом.");
                   subtitle.setTextSize(16);
-                  subtitle.setPadding(0, 20, 0, 30);
-                  layout.addView(subtitle);
+                  subtitle.setTextColor(Color.GRAY);
+                  subtitle.setPadding(0, 15, 0, 25);
+                  root.addView(subtitle);
 
-                  String[] tasks = {
-                      "Вынести мусор — 200₽ · Промышленный район",
-                      "Собрать стол — 700₽ · Октябрьский район",
-                      "Настроить Wi-Fi — 500₽ · Советский район",
-                      "Помочь донести вещи — 400₽ · Ленинский район"
-                  };
+                  Button createButton = new Button(this);
+                  createButton.setText("Создать задание");
+                  createButton.setTextSize(18);
+                  createButton.setOnClickListener(v -> showCreateScreen());
+                  root.addView(createButton);
+
+                  TextView section = new TextView(this);
+                  section.setText("Задания:");
+                  section.setTextSize(22);
+                  section.setTypeface(null, Typeface.BOLD);
+                  section.setPadding(0, 35, 0, 15);
+                  root.addView(section);
+
+                  listLayout = new LinearLayout(this);
+                  listLayout.setOrientation(LinearLayout.VERTICAL);
+                  root.addView(listLayout);
+
+                  renderTasks();
+
+                  TextView footer = new TextView(this);
+                  footer.setText("Версия 0.2");
+                  footer.setTextSize(14);
+                  footer.setTextColor(Color.GRAY);
+                  footer.setGravity(Gravity.CENTER);
+                  footer.setPadding(0, 30, 0, 0);
+                  root.addView(footer);
+
+                  scroll.addView(root);
+                  setContentView(scroll);
+              }
+
+              void renderTasks() {
+                  listLayout.removeAllViews();
 
                   for (String task : tasks) {
-                      TextView card = new TextView(this);
-                      card.setText(task);
-                      card.setTextSize(18);
-                      card.setTextColor(Color.BLACK);
-                      card.setPadding(30, 30, 30, 30);
+                      LinearLayout card = new LinearLayout(this);
+                      card.setOrientation(LinearLayout.VERTICAL);
+                      card.setPadding(25, 25, 25, 25);
                       card.setBackgroundColor(Color.rgb(235, 235, 235));
+
+                      TextView text = new TextView(this);
+                      text.setText(task);
+                      text.setTextSize(18);
+                      text.setTextColor(Color.BLACK);
+                      card.addView(text);
+
+                      Button respond = new Button(this);
+                      respond.setText("Откликнуться");
+                      respond.setOnClickListener(v -> showContactScreen(task));
+                      card.addView(respond);
 
                       LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                           LinearLayout.LayoutParams.MATCH_PARENT,
                           LinearLayout.LayoutParams.WRAP_CONTENT
                       );
-                      params.setMargins(0, 0, 0, 20);
-                      layout.addView(card, params);
+                      params.setMargins(0, 0, 0, 22);
+                      listLayout.addView(card, params);
                   }
+              }
 
-                  TextView footer = new TextView(this);
-                  footer.setText("Версия 0.1");
-                  footer.setTextSize(14);
-                  footer.setGravity(Gravity.CENTER);
-                  footer.setPadding(0, 30, 0, 0);
-                  layout.addView(footer);
+              void showCreateScreen() {
+                  ScrollView scroll = new ScrollView(this);
+                  LinearLayout root = new LinearLayout(this);
+                  root.setOrientation(LinearLayout.VERTICAL);
+                  root.setPadding(35, 55, 35, 35);
 
-                  scroll.addView(layout);
+                  TextView title = new TextView(this);
+                  title.setText("Создать задание");
+                  title.setTextSize(26);
+                  title.setTypeface(null, Typeface.BOLD);
+                  root.addView(title);
+
+                  EditText name = new EditText(this);
+                  name.setHint("Что нужно сделать?");
+                  root.addView(name);
+
+                  EditText price = new EditText(this);
+                  price.setHint("Цена, например 500");
+                  price.setInputType(2);
+                  root.addView(price);
+
+                  EditText district = new EditText(this);
+                  district.setHint("Район Самары");
+                  root.addView(district);
+
+                  Button publish = new Button(this);
+                  publish.setText("Опубликовать");
+                  publish.setOnClickListener(v -> {
+                      String n = name.getText().toString().trim();
+                      String p = price.getText().toString().trim();
+                      String d = district.getText().toString().trim();
+
+                      if (n.length() == 0 || p.length() == 0 || d.length() == 0) {
+                          Toast.makeText(this, "Заполни все поля", Toast.LENGTH_SHORT).show();
+                          return;
+                      }
+
+                      tasks.add(0, n + " — " + p + "₽ · " + d + " район");
+                      Toast.makeText(this, "Задание добавлено", Toast.LENGTH_SHORT).show();
+                      showMainScreen();
+                  });
+                  root.addView(publish);
+
+                  Button back = new Button(this);
+                  back.setText("Назад");
+                  back.setOnClickListener(v -> showMainScreen());
+                  root.addView(back);
+
+                  scroll.addView(root);
                   setContentView(scroll);
+              }
+
+              void showContactScreen(String task) {
+                  LinearLayout root = new LinearLayout(this);
+                  root.setOrientation(LinearLayout.VERTICAL);
+                  root.setPadding(35, 55, 35, 35);
+
+                  TextView title = new TextView(this);
+                  title.setText("Отклик на задание");
+                  title.setTextSize(26);
+                  title.setTypeface(null, Typeface.BOLD);
+                  root.addView(title);
+
+                  TextView taskText = new TextView(this);
+                  taskText.setText(task);
+                  taskText.setTextSize(20);
+                  taskText.setPadding(0, 25, 0, 25);
+                  root.addView(taskText);
+
+                  Button telegram = new Button(this);
+                  telegram.setText("Написать в Telegram");
+                  telegram.setOnClickListener(v -> {
+                      Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://t.me/"));
+                      startActivity(intent);
+                  });
+                  root.addView(telegram);
+
+                  Button phone = new Button(this);
+                  phone.setText("Позвонить");
+                  phone.setOnClickListener(v -> {
+                      Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:+79000000000"));
+                      startActivity(intent);
+                  });
+                  root.addView(phone);
+
+                  Button back = new Button(this);
+                  back.setText("Назад");
+                  back.setOnClickListener(v -> showMainScreen());
+                  root.addView(back);
+
+                  setContentView(root);
               }
           }
           EOF
 
       - name: Build APK
-        run: |
-          gradle assembleDebug --stacktrace
+        run: gradle assembleDebug --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: SamaraTasks-debug-apk
+          name: SamaraTasks-v0.2-apk
           path: app/build/outputs/apk/debug/app-debug.apk
