@@ -104,9 +104,9 @@ jobs:
           import android.graphics.Typeface;
           import android.view.View;
           import android.widget.*;
-
           import java.util.ArrayList;
-
+          import android.view.Gravity;
+          
           public class MainActivity extends Activity {
               LinearLayout listLayout;
               ArrayList<String> tasks = new ArrayList<>();
@@ -124,7 +124,8 @@ jobs:
               }
 
               void showMainScreen() {
-                  ScrollView scroll = new ScrollView(this);
+                  ScrollView s
+                  croll = new ScrollView(this);
                   LinearLayout root = new LinearLayout(this);
                   root.setOrientation(LinearLayout.VERTICAL);
                   root.setPadding(35, 55, 35, 35);
